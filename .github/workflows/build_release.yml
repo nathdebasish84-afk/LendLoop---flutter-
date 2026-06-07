@@ -34,16 +34,37 @@ jobs:
           flutter create --project-name lendloop --org com.example temp_project
           cp -r temp_project/android .
           rm -rf temp_project
-        
-      - name: Fix Kotlin stdlib conflict
+
+      - name: Create missing resources
         run: |
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.8.22"/' android/build.gradle
-          find android -name "*.gradle" -exec sed -i 's/kotlin-stdlib-jdk7/kotlin-stdlib/g' {} \;
-          find android -name "*.gradle" -exec sed -i 's/kotlin-stdlib-jdk8/kotlin-stdlib/g' {} \;
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/styles.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+              </style>
+              <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+                  <item name="android:windowBackground">@android:color/white</item>
+              </style>
+          </resources>
+          EOF
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/launch_background.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@android:color/white" />
+          </layer-list>
+          EOF
+
+      - name: Force Kotlin version consistency
+        run: |
+          KOTLIN_VER=$(grep "ext.kotlin_version" android/build.gradle | grep -o '"[^"]*"' | tr -d '"')
+          echo "Detected Kotlin version: $KOTLIN_VER"
+          find android -name "*.gradle" | xargs grep -l "kotlin-stdlib" | xargs sed -i "s/kotlin-stdlib-jdk[78]/kotlin-stdlib/g"
 
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
-
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

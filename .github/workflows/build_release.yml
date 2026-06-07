@@ -30,8 +30,8 @@ jobs:
         run: rm -rf android
 
       - name: Regenerate Android folder
-        run: flutter create --platforms=android .
-
+        run: flutter create --platforms=android --project-name lendloop 
+        
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
 

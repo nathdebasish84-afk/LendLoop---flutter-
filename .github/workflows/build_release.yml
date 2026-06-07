@@ -22,33 +22,15 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
-      - name: Create missing Android resources
-        run: |
-          mkdir -p android/app/src/main/res/values
-          cat > android/app/src/main/res/values/styles.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-                  <item name="android:windowBackground">@drawable/launch_background</item>
-              </style>
-              <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-                  <item name="android:windowBackground">@android:color/white</item>
-              </style>
-          </resources>
-          EOF
-          sudo apt-get install -y librsvg2-bin
-          mkdir -p android/app/src/main/res/mipmap-hdpi
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/app/src/main/res/mipmap-xhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-          rsvg-convert -w 72 -h 72 assets/icon/icon.svg -o android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-          rsvg-convert -w 48 -h 48 assets/icon/icon.svg -o android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          rsvg-convert -w 96 -h 96 assets/icon/icon.svg -o android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          rsvg-convert -w 144 -h 144 assets/icon/icon.svg -o android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          rsvg-convert -w 192 -h 192 assets/icon/icon.svg -o android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Delete broken Android folder
+        run: rm -rf android
+
+      - name: Regenerate Android folder
+        run: flutter create --platforms=android .
 
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons

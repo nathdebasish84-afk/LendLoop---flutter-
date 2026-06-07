@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_theme.dart';
 import 'providers/transaction_provider.dart';
-import 'views/dashboard_view.dart';
+import 'views/main_navigation_wrapper.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
+  
   runApp(
     MultiProvider(
       providers: [
@@ -26,7 +30,7 @@ class LendLoopApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const DashboardView(),
+      home: const MainNavigationWrapper(),
     );
   }
 }

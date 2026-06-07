@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 
@@ -34,17 +35,32 @@ class _EntryFormViewState extends State<EntryFormView> {
     _hasReminder = t?.hasReminder ?? false;
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _selectDateTime(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _dueDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
     );
-    if (picked != null && picked != _dueDate) {
-      setState(() {
-        _dueDate = picked;
-      });
+    
+    if (pickedDate != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_dueDate),
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          _dueDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      }
     }
   }
 
@@ -79,6 +95,32 @@ class _EntryFormViewState extends State<EntryFormView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.transaction == null ? 'Add Entry' : 'Edit Entry'),
+        actions: [
+          if (widget.transaction != null)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Entry'),
+                    content: const Text('Are you sure you want to delete this transaction?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () {
+                          Provider.of<TransactionProvider>(context, listen: false).deleteTransaction(widget.transaction!.id!);
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -120,20 +162,27 @@ class _EntryFormViewState extends State<EntryFormView> {
                 onSaved: (value) => _description = value ?? '',
               ),
               const SizedBox(height: 16),
-              ListTile(
-                title: const Text('Due Date'),
-                subtitle: Text('${_dueDate.day}/${_dueDate.month}/${_dueDate.year}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDate(context),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: const Text('Due Date & Time'),
+                      subtitle: Text(DateFormat('MMM dd, yyyy - hh:mm a').format(_dueDate)),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () => _selectDateTime(context),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Set Reminder Notification'),
+                      value: _hasReminder,
+                      onChanged: (value) => setState(() => _hasReminder = value),
+                    ),
+                  ],
+                ),
               ),
-              SwitchListTile(
-                title: const Text('Set Reminder'),
-                value: _hasReminder,
-                onChanged: (value) => setState(() => _hasReminder = value),
-              ),
-              if (widget.transaction != null)
+              if (widget.transaction != null) ...[
+                const SizedBox(height: 16),
                 DropdownButtonFormField<TransactionStatus>(
-                  initialValue: _status,
+                  value: _status,
                   decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: TransactionStatus.pending, child: Text('Pending')),
@@ -141,15 +190,16 @@ class _EntryFormViewState extends State<EntryFormView> {
                   ],
                   onChanged: (value) => setState(() => _status = value!),
                 ),
+              ],
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _saveForm,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
-                  backgroundColor: Colors.green,
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Save Entry'),
+                child: Text(widget.transaction == null ? 'Save Entry' : 'Update Entry'),
               ),
             ],
           ),

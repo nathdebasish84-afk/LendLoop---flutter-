@@ -1,0 +1,51 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.idea/
+.vscode/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configurations and tasks you actually
+# want to commit. Some settings that should be kept per-user should not be committed.
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# Flutter/Dart-specific
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Android-specific
+/android/app/src/main/res/drawable-*/launcher_icon.png
+/android/app/src/main/res/mipmap-*/launcher_icon.png
+/android/app/src/main/res/values/styles.xml
+/android/app/src/main/res/xml/network_security_config.xml
+*.keystore
+*.jks
+*.p12
+*.key
+*.mobileprovision
+pubspec-lock
+
+# iOS-specific
+.generated/
+Pods/
+ServiceDefinitions.json
+Runner/GeneratedPluginRegistrant.h
+Runner/GeneratedPluginRegistrant.m

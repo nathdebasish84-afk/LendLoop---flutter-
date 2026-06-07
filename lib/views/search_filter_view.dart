@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction.dart';
 import 'entry_form_view.dart';
+import 'widgets/empty_state_widget.dart';
 
 class SearchFilterView extends StatefulWidget {
   const SearchFilterView({super.key});
@@ -31,12 +32,11 @@ class _SearchFilterViewState extends State<SearchFilterView> {
     return Scaffold(
       appBar: AppBar(
         title: TextField(
-          decoration: const InputDecoration(
-            hintText: 'Search by name or item...',
+          decoration: InputDecoration(
+            hintText: 'Search people or items...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
           ),
-          style: const TextStyle(color: Colors.white),
           onChanged: (value) => setState(() => _searchQuery = value),
         ),
       ),
@@ -44,29 +44,29 @@ class _SearchFilterViewState extends State<SearchFilterView> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                FilterChip(
-                  label: const Text('Lent'),
+                _FilterChip(
+                  label: 'Lent',
                   selected: _typeFilter == TransactionType.lend,
                   onSelected: (val) => setState(() => _typeFilter = val ? TransactionType.lend : null),
                 ),
                 const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Borrowed'),
+                _FilterChip(
+                  label: 'Borrowed',
                   selected: _typeFilter == TransactionType.borrow,
                   onSelected: (val) => setState(() => _typeFilter = val ? TransactionType.borrow : null),
                 ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Pending'),
+                const SizedBox(width: 16),
+                _FilterChip(
+                  label: 'Pending',
                   selected: _statusFilter == TransactionStatus.pending,
                   onSelected: (val) => setState(() => _statusFilter = val ? TransactionStatus.pending : null),
                 ),
                 const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Completed'),
+                _FilterChip(
+                  label: 'Completed',
                   selected: _statusFilter == TransactionStatus.completed,
                   onSelected: (val) => setState(() => _statusFilter = val ? TransactionStatus.completed : null),
                 ),
@@ -74,27 +74,75 @@ class _SearchFilterViewState extends State<SearchFilterView> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredTransactions.length,
-              itemBuilder: (context, index) {
-                final t = filteredTransactions[index];
-                return ListTile(
-                  leading: Icon(
-                    t.type == TransactionType.lend ? Icons.arrow_upward : Icons.arrow_downward,
-                    color: t.type == TransactionType.lend ? Colors.green : Colors.blue,
+            child: filteredTransactions.isEmpty
+                ? const EmptyStateWidget(
+                    title: 'No matches',
+                    message: 'Try adjusting your filters or search terms.',
+                    icon: Icons.search_off_outlined,
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredTransactions.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final t = filteredTransactions[index];
+                      return Hero(
+                        tag: 'trans_${t.id}',
+                        child: Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: (t.type == TransactionType.lend ? Colors.green : Colors.blue).withOpacity(0.1),
+                              child: Icon(
+                                t.type == TransactionType.lend ? Icons.arrow_upward : Icons.arrow_downward,
+                                color: t.type == TransactionType.lend ? Colors.green : Colors.blue,
+                                size: 18,
+                              ),
+                            ),
+                            title: Text(t.personName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: Text(t.itemOrAmount),
+                            trailing: Text(
+                              t.status == TransactionStatus.pending ? 'Pending' : 'Done',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: t.status == TransactionStatus.pending ? Colors.orange : Colors.purple,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => EntryFormView(transaction: t)),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  title: Text(t.personName),
-                  subtitle: Text(t.itemOrAmount),
-                  trailing: Text(t.status == TransactionStatus.pending ? 'Pending' : 'Completed'),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => EntryFormView(transaction: t)),
-                  ),
-                );
-              },
-            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Function(bool) onSelected;
+
+  const _FilterChip({required this.label, required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: onSelected,
+      showCheckmark: false,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+      side: BorderSide(
+        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline.withOpacity(0.3),
       ),
     );
   }

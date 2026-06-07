@@ -26,18 +26,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install librsvg for SVG conversion
-        run: sudo apt-get install -y librsvg2-bin
-
-      - name: Convert SVG icon to PNG
-        run: rsvg-convert -w 1024 -h 1024 assets/icon/icon.svg -o assets/icon/icon.png
-
-      - name: Generate launcher icons
-        run: dart run flutter_launcher_icons
-
-      - name: Generate splash screen
-        run: dart run flutter_native_splash:create
-
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
 
